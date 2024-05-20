@@ -1,0 +1,110 @@
+/* Blue color palette for links and buttons */
+:root {
+    --bs-primary: #0022ff; /* Bootstrap blue for primary elements */
+    --bs-info: #17a2b8; /* Info color if needed */
+    --bs-success: #0056b3; /* Success elements, darker blue */
+    --bs-link-color: #004085; /* Custom link color */
+}
+
+/* Overall background color */
+body {
+    background-color: #f0f8ff; /* Soft blue background for a gentle, neutral backdrop */
+}
+
+/* Title block background and text colors */
+.quarto-title-block {
+    background-color: #1e90ff; /* Rich blue for the title block */
+    color: #2124d8; /* White text for contrast */
+    padding: 20px; /* Adds padding around the title for better spacing */
+    border-radius: 5px; /* Softens the corners of the title block */
+}
+
+/* Title text style */
+.quarto-title-block .title {
+    font-size: 28px; /* Increases the font size for prominence */
+    font-weight: bold; /* Makes the title text bold */
+}
+
+/* Subtitle or additional title meta style */
+.quarto-title-meta {
+    color: #2124d8; /* Lighter shade of blue for subtitle or other meta information */
+    font-size: 18px; /* Smaller than main title, but still significant */
+}
+
+/* Adjust link color for better visibility against dark background */
+a, .btn-link {
+    color: #2124d8; /* Lighter blue for links to stand out on dark backgrounds */
+}
+
+a:hover, .btn:hover {
+    color: #90caf9; /* Even lighter blue on hover for interactivity */
+    background-color: transparent; /* Ensures the background doesn't change on hover, maintaining readability */
+}
+
+h1 {
+    color: #2124d8;
+}
+
+h2, h3, h4, h5, h6 {
+    color: #0d47a1; /* Dark blue for headings */
+}
+
+a, .btn-link {
+    color: #004085; /* Dark blue for links */
+}
+
+.navbar, .footer {
+    background-color: #e3f2fd; /* Very light blue for navbar and footer */
+}
+
+/* TOC general link color */
+#TOC a {
+    color: #1565c0; /* Darker shade of blue for normal TOC links */
+}
+
+/* TOC link hover color */
+#TOC a:hover {
+    color: #64b5f6; /* Lighter blue for hover states */
+    text-decoration: underline; /* Underlines links on hover for better visibility */
+}
+
+/* TOC active link color */
+#TOC .nav-link.active {
+    color: #0d47a1; /* Even darker blue for active TOC link */
+    font-weight: bold; /* Makes active link bold */
+}
+
+/* Additional styling for TOC block */
+#TOC {
+    background-color: #e3f2fd; /* Very light blue background for the TOC area */
+    padding: 10px; /* Padding around the TOC content for spacing */
+    border-radius: 5px; /* Rounded corners for the TOC block */
+    border: 1px solid #bbdefb; /* Subtle blue border around the TOC */
+}
+
+
+.link-icon-github::after {
+    content: url('images/git1.png');
+    width: 1px;  /* Set the width of the icon */
+    height: 1px; /* Set the height of the icon */
+    display: contents;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.link-icon-linkedin::after {
+    content: url('images/link.png');
+    width: 1px;  /* Adjust the width as needed */
+    height: 1px; /* Adjust the height as needed */
+    display: inline-block;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.figure-caption {
+    text-align: center; /* Center-align the text within the caption */
+}
+
+.quarto-title-block {
+    display: none;
+  }

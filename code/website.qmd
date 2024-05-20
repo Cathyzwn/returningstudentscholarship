@@ -1,0 +1,463 @@
+---
+title: "Bare, Litter and Climate: The Transition and Correlations"
+author: A DSAN Student
+format: 
+  html: 
+    grid:
+      margin-width: 200px
+      body-width: 1200px
+      sidebar-width: 200px
+    theme: cosmo
+    css: custom-styles.css
+    toc: true
+    code-fold: true
+    embeded-resources: true
+---
+
+![](fig1.png)
+
+# Introduction 
+
+Growing up in a coastal city in China, I had never seen bare grounds, deserts, or anything other than sycamore trees, big lawns, and beaches until I visited the mid-west part of China, where the Qin Shi Huang's Buried Terracotta Army was discovered: Xi'an. The city is famous for its historical remains, food, and of course, the desert in the middle of the city. I remember the moment I got off the plane, the hot and dry air struck me, and I was blown away by the desert and the weather, thousands of miles away from my home. I had the privilege of growing up and living by the ocean, but not all people in China, and worldwide, are so lucky that they have access to fresh water and high-vegetation-covered surroundings. 12-year-old-old me has wondered, what caused the form of desert and bare ground: is its location, or climate change? 
+
+Thanks to DSAN, I got the chance to answer (if not, at least research) the questions that young me brought up years ago. 
+
+# Finding the Correlations. 
+
+The area that this story studies is in the mid-west of the US. In the lower right corner of Utah, there is a natural reserve called "Natural Bridges National Monument", which is famous for the weird-looking stones, especially the one giant arch that looks like a huge bridge (like the key bridge that connects Georgetown and Rosslyn). Utah, which is also the top state on my travel wish list, has a dry, semi-arid, and desert climate. It is one of the driest states in the country with one of the lowest relative humidity percentages. 
+
+In the reserve, the author of the dataset categorized the vegetation coverage of the reserve into Tree Canopy, Bare Ground, Herbaceous Plants, Plant Litter, and Shrub. All of the categories make sense, except for one: plant litter. According to Google, plant litter is dead plant material that has fallen to the ground, such as leaves, twigs, flowers, fruits, and bark. It's also known as litterfall the litter layer, or O horizon. It surprised me that the plant waste counts as vegetation coverage, since in the dry weather of Utah, I assume that the plant waste will just turn into dry leaves, then leaf dust in no time. 
+
+On second thought: what happens after the plant litter? Will there be new plants, or the area turn into bare ground? **My theory is: that the plants have to die first, then their "bodies" will turn into plant waste, and the waste dissolves leaving nothing but bare ground behind.**
+
+To find evidence to support my theory, I took a look into the confusion matrix, which is the correlation matrix between each variable in the dataset. Statistically, based on the historical data (the year 1980 to 2018), the Plant Litter coverage percentage is positively correlated with Bare Ground coverage, as well as the Shrub coverage, with high correlation scores. Meanwhile, Bare and Shrub coverage has a high negative correlation. 
+
+Those statistics mean: 
+
+1. **Higher Shrub coverage &rarr; higher Litter coverage **
+
+2. **Higher Litter coverage &rarr; higher Bare coverage **
+
+3. **Higher Shrub coverage &rarr; lower Bare coverage **
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 1: Correlation Matrix"
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+history = pd.read_csv('../data/NABR_historic.csv')
+df = pd.read_csv('../data/nearterm_data_2020-2024.csv')
+
+columns_to_drop = ['long', 'lat', 'year', 'TimePeriod', 'RCP', 'scenario']
+his_eda = history.drop(columns=columns_to_drop)
+corr_matrix = his_eda.corr()
+
+corr_matrix = history[['treecanopy', 'Ann_Herb', 'Bare', 'Herb', 'Litter', 'Shrub']].corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', square=True)
+plt.title('Correlation Matrix')
+plt.show()
+```
+
+# Vegetation Trends Correlation, and Transitions Overtime. 
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+
+if list(df.columns) == list(history.columns):
+    # Concatenate the DataFrames along the rows
+    stacked_data = pd.concat([df, history], axis=0)
+    
+    #print(stacked_data.head())
+    
+    output_file_path = '../data/stacked_dataset.csv'
+    stacked_data.to_csv(output_file_path, index=False)
+else:
+    print("The columns of the datasets do not match.")
+
+color_mapping = {
+    'Bare': 'green',
+    'Herb': 'purple',
+    'Litter': 'red',
+    'Shrub': 'darkblue',
+    'treecanopy': 'yellow',
+    'Ann_Herb': 'lime', 
+    'DrySoilDays_Summer_whole': 'blue', 
+    'Evap_Summer': 'maroon',
+    'ExtremeShortTermDryStress_Summer_whole': 'lightorange',
+    'FrostDays_Winter': 'pink',
+    'NonDrySWA_Summer_whole': 'blue', 
+    'PPT_Winter': 'lightblue', 
+    'PPT_Summer': 'lightgreen', 
+    'PPT_Annual': 'teal',
+    'T_Winter': 'darkpurple',
+    'T_Summer': 'darkred', 
+    'T_Annual': 'darkgreen', 
+    'Tmax_Summer': 'brown', 
+    'Tmin_Winter': 'lightcoral',
+    'VWC_Winter_whole': 'pink', 
+    'VWC_Spring_whole': 'darkred', 
+    'VWC_Summer_whole': 'black',
+    'VWC_Fall_whole': 'orange'
+}
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 2: Trend of Vegetation Coverage Over Time"
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+file_path = '../data/stacked_dataset.csv'
+data = pd.read_csv(file_path)
+
+data.fillna(data.mean(), inplace=True)
+
+# Visualize Vegetation Cover Over Time
+fig, ax = plt.subplots(figsize=(12, 6))
+
+# Set the background color
+light_pink = (200/255, 182/255, 193/255, 0.3)
+fig.patch.set_facecolor(light_pink)
+ax.set_facecolor(light_pink)
+
+sns.lineplot(x='year', y='treecanopy', data=data, label='Tree Canopy', ax=ax, color=color_mapping['treecanopy'])
+sns.lineplot(x='year', y='Ann_Herb', data=data, label='Annual Herbaceous', ax=ax, color=color_mapping['Ann_Herb'])
+sns.lineplot(x='year', y='Herb', data=data, label='Herbaceous', ax=ax, color=color_mapping['Herb'])
+sns.lineplot(x='year', y='Litter', data=data, label='Litter', ax=ax, color=color_mapping['Litter'])
+sns.lineplot(x='year', y='Shrub', data=data, label='Shrub', ax=ax, color=color_mapping['Shrub'])
+sns.lineplot(x='year', y='Bare', data=data, label='Bare', ax=ax, color=color_mapping['Bare'])
+
+plt.title('Vegetation Cover Dynamics Over Time')
+plt.xlabel('Year')
+plt.ylabel('Percentage Cover')
+plt.legend()
+plt.show()
+```
+
+Previously, the correlations between 'Bare', 'Shrub', and 'Litter' were discovered, which indicates the trends of percentage coverage of the three-plantation coverage are in sync at some level. The younger me would conclude that there is no apparent change in three of the vegetation coverage over time, but after one year in DSAN, I know that the scale of each line should be individually separated, for a clearer view. 
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 3: Annual Plant Litter & Shrub Coverage Trends Over Time"
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+fig.patch.set_facecolor(light_pink)
+ax1.set_facecolor(light_pink)
+sns.lineplot(x='year', y='Litter', data=data, label='Annual Plant Litter Coverage', ax=ax1, color=color_mapping['Litter'])
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Percentage (%)')
+ax1.tick_params(axis='y')
+
+ax2 = ax1.twinx()
+sns.lineplot(x='year', y='Shrub', data=data, label='Annual Shrub Coverage', ax=ax2, color=color_mapping['Shrub'])
+ax2.set_ylabel('Percentage (%)')
+ax2.tick_params(axis='y')
+
+plt.title('Annual Plant Litter & Shrub Coverage Trends Over Time')
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+plt.show()
+```
+
+After rescaling the y-axis, I noticed that the change of percentage coverage of Shrub and Plant Litter are in sync: they go up at the same time and go down at the same time as well. This finding indicates that when there are more Shrubs, the plant will produce plant waste, producing more plant waste. At the same time, since the correlation between the percentage coverage of Litter and Shrubs is the highest among Litter and other vegetations, it implies that shrub produces the majority of the plant waste. 
+
+Then, what's the case for Bare and Shrub, Bare and Litter?  
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 4: Annual Bare Ground & Shrub Coverage Trends Over Time"
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+fig.patch.set_facecolor(light_pink)
+ax1.set_facecolor(light_pink)
+
+sns.lineplot(x='year', y='Bare', data=data, label='Annual Bare Ground Coverage', ax=ax1, color=color_mapping['Bare'])
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Percentage (%)')
+ax1.tick_params(axis='y')
+
+ax2 = ax1.twinx()
+sns.lineplot(x='year', y='Shrub', data=data, label='Annual Shrub Coverage', ax=ax2, color=color_mapping['Shrub'])
+ax2.set_ylabel('Percentage (%)')
+ax2.tick_params(axis='y')
+
+plt.title('Annual Bare Ground & Shrub Coverage Trends Over Time')
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+plt.show()
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 5: Annual Plant Litter & Bare Ground Coverage Trends Over Time"
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+fig.patch.set_facecolor(light_pink)
+ax1.set_facecolor(light_pink)
+sns.lineplot(x='year', y='Litter', data=data, label='Annual Plant Litter Coverage', ax=ax1, color=color_mapping['Litter'])
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Percentage (%)')
+ax1.tick_params(axis='y')
+
+ax2 = ax1.twinx()
+sns.lineplot(x='year', y='Bare', data=data, label='Annual Bare Ground Coverage', ax=ax2, color=color_mapping['Bare'])
+ax2.set_ylabel('Percentage (%)')
+ax2.tick_params(axis='y')
+
+plt.title('Annual Plant Litter & Bare Ground Coverage Trends Over Time')
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+plt.show()
+```
+
+
+The trend of change, both between Bare and Shrub, Bare and Litter seemingly, is not related, **however**, if moving 'Bare Ground' one year forward, then the two relations are similar and in sync. In other words: the change of Bare Ground coverage is similar to both Litter and Shrub, but one year later. 
+
+The findings above are all very supportive of my assumption: the plants, in this case, the Shrub, have to die first, then their "bodies" will turn into plant waste, and the wastes dissolve then leave nothing but bare ground behind. **Additionally**, the transition time, from litter to bare ground, is approximately one year. 
+
+# What Causes the Transition? 
+
+Now that I know what is the "afterlife" of a shrub, going back to the question that 12-year-old me would ask: What caused the transition? What aspects contribute to the transition, is it climate, rainfall, or anything else? 
+
+(You may think what kind of 12 years-old could think of the word "transition", or "climate": the kind of 12 years-old that will get into DSAN and work as a data scientist :) )
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 6: Correlation Matrix between Bare, Shrub, Litter, and climate variables. "
+
+corr_matrix = data[['Bare', 'Litter', 'Shrub','DrySoilDays_Summer_whole', 'Evap_Summer',
+       'ExtremeShortTermDryStress_Summer_whole', 'FrostDays_Winter',
+       'NonDrySWA_Summer_whole', 'PPT_Winter', 'PPT_Summer', 'PPT_Annual',
+       'T_Winter', 'T_Summer', 'T_Annual', 'Tmax_Summer', 'Tmin_Winter',
+       'VWC_Winter_whole', 'VWC_Spring_whole', 'VWC_Summer_whole',
+       'VWC_Fall_whole']].corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', square=True)
+plt.title('Correlation Matrix')
+plt.show()
+
+```
+
+Repeating the previous research process and starting by examining the statistical relations: it seems like, comparably, those variables: 'NonDrySWA_Summer_whole', 'VWC_Winter_whole', 'VWC_Spring_whole', 'VWC_Summer_whole', 'VWC_Fall_whole', are positively correlated with Litter coverage, and negatively correlated with Bare Ground coverage. 
+
+**NonDrySWA_Summer_whole**: Represents the non-dry soil water availibility during summer; mean soil water availibility during days with the soil >-3.9MPa during summer in total centimeters
+
+**VWC_Season_whole**: Represents the volumetric water content in the top 50cm of soil during winter/summer/spring/fall; median volumetric water content in the top 50cm of soil during winter in m^3 / m^3. 
+
+This finding indicates that the transition between **shrub &rarr; litter &rarr; bare ground** is correlated with soil water availability in the summer and year-round median volumetric water content in the top surface of the soil. 
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| fig-cap: "Fig 7: Volumetric Water Content Trends Over Time"
+
+import plotly.graph_objects as go
+
+columns_to_check = ['NonDrySWA_Summer_whole', 'VWC_Winter_whole', 'VWC_Spring_whole', 'VWC_Summer_whole', 'VWC_Fall_whole']
+df_1 = data.dropna(subset=columns_to_check)
+df_1 = df_1.dropna(subset=columns_to_check)
+df_1 = df_1.drop_duplicates(subset=columns_to_check)
+df_1 = df_1.loc[
+    ((df_1['RCP'] == '4.5') & (df_1['scenario'] == 'sc22')) |
+    ((df_1['RCP'] == 'historical') & (df_1['scenario'] == 'sc1'))
+]
+
+mean_data_by_year = df_1.groupby('year')[columns_to_check].mean().reset_index()
+
+df_1.to_csv('../data/df_1.csv', index=False)
+
+columns_to_check_2 = ['Bare', 'Shrub']
+mean_data_by_year_2 = data.groupby('year')[columns_to_check_2].mean().reset_index()
+
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=mean_data_by_year_2['year'], y=mean_data_by_year_2['Bare'], 
+                         mode='lines', name='Bare', 
+                         line=dict(color=color_mapping['Bare'])))
+
+fig.add_trace(go.Scatter(x=mean_data_by_year_2['year'], y=mean_data_by_year_2['Shrub'], 
+                         mode='lines', name='Shrub', 
+                         line=dict(color=color_mapping['Shrub'])))
+
+fig.add_trace(go.Scatter(x=mean_data_by_year['year'], y=mean_data_by_year['NonDrySWA_Summer_whole'], 
+                         mode='lines', name='NonDrySWA_Summer_whole', 
+                         line=dict(color=color_mapping['NonDrySWA_Summer_whole']), visible='legendonly', yaxis = 'y2'))
+
+# Add VWC_Winter_whole to the secondary y-axis
+fig.add_trace(go.Scatter(x=mean_data_by_year['year'], y=mean_data_by_year['VWC_Winter_whole'], 
+                         mode='lines', name='VWC_Winter_whole', 
+                         line=dict(color=color_mapping['VWC_Winter_whole']), visible='legendonly', yaxis = 'y2'))
+
+# Add VWC_Spring_whole to the secondary y-axis
+fig.add_trace(go.Scatter(x=mean_data_by_year['year'], y=mean_data_by_year['VWC_Spring_whole'], 
+                         mode='lines', name='VWC_Spring_whole', 
+                         line=dict(color=color_mapping['VWC_Spring_whole']), visible='legendonly', yaxis = 'y2'))
+
+# Add VWC_Summer_whole to the secondary y-axis
+fig.add_trace(go.Scatter(x=mean_data_by_year['year'], y=mean_data_by_year['VWC_Summer_whole'], 
+                         mode='lines', name='VWC_Summer_whole', 
+                         line=dict(color=color_mapping['VWC_Summer_whole']), visible='legendonly', yaxis = 'y2'))
+
+# Add VWC_Fall_whole to the secondary y-axis
+fig.add_trace(go.Scatter(x=mean_data_by_year['year'], y=mean_data_by_year['VWC_Fall_whole'], 
+                         mode='lines', name='VWC_Fall_whole', 
+                         line=dict(color=color_mapping['VWC_Fall_whole']), visible='legendonly', yaxis = 'y2'))
+
+# Update the layout to include secondary y-axis
+fig.update_layout(
+    title='Volumetric Water Content Trends Over Time',
+    xaxis=dict(title='Year', showgrid=False),
+    yaxis=dict(title='m^3', showgrid=False),
+    yaxis2=dict(title='cm', showgrid=False, overlaying='y', side='right'),
+    legend=dict(x=1.10, y=1, xanchor='left', yanchor='top', bgcolor='rgba(255, 255, 255, 0.5)', bordercolor='black', borderwidth=1),
+    hovermode='x unified',
+    plot_bgcolor='rgba(200, 182, 193, 0.3)'
+)
+
+
+# Show the figure
+fig.show()
+```
+
+To further prove the hypothesis, I noticed that the Bare ground coverage trend is more closely correlated with "non-dry soil water availability during summer" (NonDrySWA_Summer_whole), and "volumetric water content in the top 50cm of soil during summer" (VWC_Summer_whole), compares to other seasons. 
+
+So, my initial conclusion is **transition between shrub &rarr; litter &rarr; bare ground is correlated with soil water availability and median volumetric water content in the top surface of the soil in the summertime**. 
+
+# Futher Investigation: Location's Impact. 
+
+Although water availability is crucial for the shrub's transition, other variables may have an impact on the process. The location's impact could be significant and inevitably moving from east to west across the country, it could also mean something even within one natural reserve. 
+
+Since we already discovered the correlations between the shrub's transition and water availability, the next step is to take a look at the location's impact on the vegetation coverage. 
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+#| fig-cap: "Fig 8: Bare Coverage Heatmap"
+
+import pandas as pd
+import folium
+from folium.plugins import HeatMap
+import ipywidgets as widgets
+from ipywidgets import interact
+import branca.colormap as cm
+from folium import IFrame, Popup
+
+# Calculate the central coordinates for the initial map view
+center_lat = data['lat'].mean()
+center_long = data['long'].mean()
+
+def create_heatmap(veg_type, color):
+    # Filter the data
+    heat_data = [[row['lat'], row['long'], row[veg_type]] for index, row in data.iterrows() if not pd.isnull(row[veg_type])]
+
+    # Normalize the data to the range 0-1 for the heatmap
+    heat_data_normalized = [[d[0], d[1], d[2] / 100] for d in heat_data]
+
+    # Define the color map for the legend
+    colormap = cm.LinearColormap(colors=['white', color], vmin=0, vmax=100, caption=f'{veg_type} Coverage (%)')
+
+    # Create a map centered around the calculated mean latitude and longitude
+    m = folium.Map(location=[center_lat, center_long], zoom_start=13)  # Adjust zoom_start as needed
+
+    # Add the heatmap layer with a custom gradient
+    HeatMap(heat_data_normalized, gradient={0.0: 'white', 1.0: color}, min_opacity=0, max_opacity=1).add_to(m)
+
+    # Add the colormap (legend) to the map
+    colormap.add_to(m)
+
+    title_html = f'''
+        <div style="position: fixed; 
+                    bottom: 10px; left: 10px; width: 300px; height: 60px; 
+                    background-color: white; opacity: 0.7; z-index:9999; font-size:16px;
+                    border:2px solid grey; padding: 10px;">
+            <b>{veg_type} Coverage Heatmap</b><br>
+        </div>
+    '''
+    
+    # Add the title and subtitle to the map
+    m.get_root().html.add_child(folium.Element(title_html))
+
+    # Display the map
+    return m
+
+interact(create_heatmap, veg_type='Bare', color=color_mapping['Bare'])
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+#| fig-cap: "Fig 9: Shrub Coverage Heatmap"
+
+interact(create_heatmap, veg_type='Shrub', color=color_mapping['Shrub'])
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+#| fig-cap: "Fig 10: Litter Coverage Heatmap"
+
+interact(create_heatmap, veg_type='Litter', color=color_mapping['Litter'])
+```
+
+Surprisingly, all the three vegetation: Bare, Shrub, and Litter, are denser on the northwest side of the reserve. 
+
+Some ideas for further investigations are: 
+
+**Elevation differences**: Is the elevation descending from northwest to southeast? This may cause the water availability in the top surface of the soil to be lower for the northwest than the southeast. Since, if the elevation is higher, this means higher floor temperature due to the direct sunlight. 
+
+**Wind**: Is the wind coming from the northwest to southeast? If so, the wind could take the moisture, also prevent taller trees (taller than shrubs) from growing, since taller trees need more water from the soil and be able to stand up to the wind. 
+
+**Human/Animal Activities**: Is the allocation of vegetation coverage manipulated by humans? Or are they the habitat of some animals in the reserve? If so, I will need more data and information to prove my assumption. 
+
+# Conclusion 
+
+As I was saying before, I have the privilege to live on the coastline, and never have to worry about water, having fresh groceries, and seeing greens everywhere I go. That's why I believe everyone (who is financially able to, of course) must travel, and explore the world: not only traveling to scenery places, but also places like Xi'an or Utah, where the culture is rich and stones are magnificent, but the climate is not very desirable. Only this way one could appreciate the accessibility to fresh water, and raise awareness of issues like water saving, desertation, climate change, etc. 
+
+I still remember a story I read in middle school, about a project in China that reversed desertation, planting trees in the desert by first changing the sand into something that could contain water. It took the residents over 20 years to accomplish the task and planted thousands of trees on the area, where it was originally thousands of anchors of deserts. During the process, there were failures and desperation, but in the end, the outcome was breathtaking. Not until then I realized, how serious dissertation is in China, and worldwide, and it occurred to me that I am so lucky to be surrounded by all the sycamore trees. Now, looking at the dataset, on top of finding correlations between variables and coming to a conclusion, I feel more related to the fact that the majority of the vegetation coverage is Bare ground (about 55% each year) and wish I could contribute something to make the earth greener again. 
+
+
+# References
+
+Dataset: [https://www.sciencebase.gov/catalog/item/61a6952fd34eb622f6978d9f](https://www.sciencebase.gov/catalog/item/61a6952fd34eb622f6978d9f)
+
+Picture: [National Park Service](https://www.nps.gov/nabr/index.htm)
